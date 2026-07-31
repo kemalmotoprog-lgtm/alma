@@ -36,7 +36,8 @@ foreach ($porMarca as $marcaNombre => $items) {
         $totalValor += $valor;
         $totalStock += $p['stock'];
         $campanaTxt = $p['campana_numero'] ? " (C{$p['campana_numero']}/{$p['campana_anio']})" : '';
-        $texto .= "• {$p['nombre']}{$campanaTxt} — stock {$p['stock']}, " . money($p['precio_sugerido']) . "\n";
+        $codigoTxt = $p['codigo'] ? " [{$p['codigo']}]" : '';
+        $texto .= "• {$p['nombre']}{$codigoTxt}{$campanaTxt} — stock {$p['stock']}, " . money($p['precio_sugerido']) . "\n";
     }
     $texto .= "\n";
 }

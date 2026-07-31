@@ -26,6 +26,7 @@ function abrirModalProducto() {
 function cerrarModalProducto() {
     document.getElementById('modalProducto').classList.remove('open');
     document.getElementById('prodNombre').value = '';
+    document.getElementById('prodCodigo').value = '';
     document.getElementById('prodMarca').value = '';
     document.getElementById('prodCampana').innerHTML = '<option value="">— Elige una marca primero —</option>';
     document.getElementById('prodPrecio').value = '';
@@ -49,6 +50,7 @@ async function cargarCampanasDeMarca() {
 
 async function crearProducto() {
     const nombre = document.getElementById('prodNombre').value.trim();
+    const codigo = document.getElementById('prodCodigo').value.trim();
     const marcaId = document.getElementById('prodMarca').value;
     const campanaId = document.getElementById('prodCampana').value;
     const precio = document.getElementById('prodPrecio').value || 0;
@@ -58,7 +60,7 @@ async function crearProducto() {
     if (!marcaId) { toast('Selecciona una marca'); return; }
 
     const r = await api('api/productos.php', 'POST', {
-        nombre, marca_id: marcaId, campana_id: campanaId || null,
+        nombre, codigo, marca_id: marcaId, campana_id: campanaId || null,
         precio_sugerido: precio, stock
     });
 

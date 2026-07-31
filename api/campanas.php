@@ -32,4 +32,12 @@ if ($method === 'POST') {
     }
 }
 
+if ($method === 'DELETE') {
+    $id = (int)($_GET['id'] ?? 0);
+    if (!$id) jsonOut(['ok' => false, 'error' => 'Falta id'], 400);
+    // El borrado en cascada (definido en el esquema) se lleva encargos y pagos de esta campaña
+    $pdo->prepare("DELETE FROM campanas WHERE id = ?")->execute([$id]);
+    jsonOut(['ok' => true]);
+}
+
 jsonOut(['ok' => false, 'error' => 'Método no soportado'], 405);

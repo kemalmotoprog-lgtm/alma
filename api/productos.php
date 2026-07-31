@@ -30,12 +30,13 @@ if ($method === 'POST') {
     $marcaId = (int)($in['marca_id'] ?? 0);
     $campanaId = !empty($in['campana_id']) ? (int)$in['campana_id'] : null;
     $nombre = trim($in['nombre'] ?? '');
+    $codigo = trim($in['codigo'] ?? '') ?: null;
     $precio = (float)($in['precio_sugerido'] ?? 0);
     $stock = (int)($in['stock'] ?? 0);
     if (!$marcaId || $nombre === '') jsonOut(['ok' => false, 'error' => 'Faltan datos'], 400);
 
-    $stmt = $pdo->prepare("INSERT INTO productos (marca_id, campana_id, nombre, precio_sugerido, stock) VALUES (?,?,?,?,?)");
-    $stmt->execute([$marcaId, $campanaId, $nombre, $precio, $stock]);
+    $stmt = $pdo->prepare("INSERT INTO productos (marca_id, campana_id, nombre, codigo, precio_sugerido, stock) VALUES (?,?,?,?,?,?)");
+    $stmt->execute([$marcaId, $campanaId, $nombre, $codigo, $precio, $stock]);
     jsonOut(['ok' => true, 'id' => $pdo->lastInsertId()]);
 }
 
@@ -47,6 +48,7 @@ if ($method === 'PUT') {
     $fields = [];
     $vals = [];
     if (array_key_exists('nombre', $in)) { $fields[] = 'nombre = ?'; $vals[] = trim($in['nombre']); }
+    if (array_key_exists('codigo', $in)) { $fields[] = 'codigo = ?'; $vals[] = trim($in['codigo']) ?: null; }
     if (array_key_exists('marca_id', $in)) { $fields[] = 'marca_id = ?'; $vals[] = (int)$in['marca_id']; }
     if (array_key_exists('campana_id', $in)) { $fields[] = 'campana_id = ?'; $vals[] = $in['campana_id'] !== '' && $in['campana_id'] !== null ? (int)$in['campana_id'] : null; }
     if (array_key_exists('precio_sugerido', $in)) { $fields[] = 'precio_sugerido = ?'; $vals[] = (float)$in['precio_sugerido']; }

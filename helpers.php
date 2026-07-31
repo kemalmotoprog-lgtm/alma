@@ -87,3 +87,78 @@ function encargoConPagos(PDO $pdo, int $encargoId): ?array {
 function nombreCampana(array $campana): string {
     return 'Campaña ' . $campana['numero'] . ' · ' . $campana['anio'];
 }
+
+/** Calcula cobrado, vendido y desgloses para el módulo de Reportes, en un rango de fechas y marcas dadas */
+function generarReporte(PDO $pdo, string $inicio, string $fin, array $marcaIds): array {
+    if (empty($marcaIds)) $marcaIds = [0]; // ninguna seleccionada -> resultado vacío, no todas
+    $in = implode(',', array_fill(0, count($marcaIds), '?'));
+
+    // Cobrado: pagos hechos dentro del rango, de encargos de las marcas seleccionadas
+    $stmt = $pdo->prepare("
+        SELECT pg.fecha, pg.monto, m.id AS marca_id, m.nombre AS marca_nombre, m.color AS marca_color,
+               cl.id AS clienta_id, cl.nombre AS clienta_nombre
+        FROM pagos pg
+        JOIN encargos e ON e.id = pg.encargo_id
+        JOIN campanas c ON c.id = e.campana_id
+        JOIN marcas m ON m.id = c.marca_id
+        JOIN clientas cl ON cl.id = e.clienta_id
+        WHERE pg.fecha BETWEEN ? AND ? AND m.id IN ($in)
+        ORDER BY pg.fecha ASC
+    ");
+    $stmt->execute([$inicio, $fin, ...$marcaIds]);
+    $pagos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Pedidos registrados en el rango (para ver cuánto se vendió, no solo cuánto se cobró)
+    $stmt = $pdo->prepare("
+        SELECT e.id, e.fecha, e.precio, m.id AS marca_id, m.nombre AS marca_nombre, m.color AS marca_color,
+               COALESCE((SELECT SUM(monto) FROM pagos WHERE encargo_id = e.id), 0) AS pagado
+        FROM encargos e
+        JOIN campanas c ON c.id = e.campana_id
+        JOIN marcas m ON m.id = c.marca_id
+        WHERE e.fecha BETWEEN ? AND ? AND m.id IN ($in)
+    ");
+    $stmt->execute([$inicio, $fin, ...$marcaIds]);
+    $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $totalCobrado = array_sum(array_column($pagos, 'monto'));
+    $totalVendido = array_sum(array_column($pedidos, 'precio'));
+    $totalPendienteGenerado = 0;
+    foreach ($pedidos as $p) {
+        $s = $p['precio'] - $p['pagado'];
+        if ($s > 0.004) $totalPendienteGenerado += $s;
+    }
+
+    // Desglose por marca
+    $porMarca = [];
+    foreach ($pagos as $p) {
+        $porMarca[$p['marca_id']]['nombre'] = $p['marca_nombre'];
+        $porMarca[$p['marca_id']]['color'] = $p['marca_color'];
+        $porMarca[$p['marca_id']]['cobrado'] = ($porMarca[$p['marca_id']]['cobrado'] ?? 0) + $p['monto'];
+    }
+    foreach ($pedidos as $p) {
+        $porMarca[$p['marca_id']]['nombre'] = $p['marca_nombre'];
+        $porMarca[$p['marca_id']]['color'] = $p['marca_color'];
+        $porMarca[$p['marca_id']]['vendido'] = ($porMarca[$p['marca_id']]['vendido'] ?? 0) + $p['precio'];
+        $porMarca[$p['marca_id']]['pedidos'] = ($porMarca[$p['marca_id']]['pedidos'] ?? 0) + 1;
+    }
+    foreach ($porMarca as &$pm) { $pm['cobrado'] = $pm['cobrado'] ?? 0; $pm['vendido'] = $pm['vendido'] ?? 0; $pm['pedidos'] = $pm['pedidos'] ?? 0; }
+    unset($pm);
+
+    // Desglose por día (solo cobrado, es lo que más le importa a Alma día a día)
+    $porDia = [];
+    foreach ($pagos as $p) {
+        $porDia[$p['fecha']] = ($porDia[$p['fecha']] ?? 0) + $p['monto'];
+    }
+    ksort($porDia);
+
+    // Top clientas que más pagaron en el rango
+    $porClienta = [];
+    foreach ($pagos as $p) {
+        $porClienta[$p['clienta_id']]['nombre'] = $p['clienta_nombre'];
+        $porClienta[$p['clienta_id']]['total'] = ($porClienta[$p['clienta_id']]['total'] ?? 0) + $p['monto'];
+    }
+    usort($porClienta, fn($a, $b) => $b['total'] <=> $a['total']);
+    $topClientas = array_slice($porClienta, 0, 5);
+
+    return compact('totalCobrado', 'totalVendido', 'totalPendienteGenerado', 'porMarca', 'porDia', 'topClientas', 'pagos', 'pedidos');
+}

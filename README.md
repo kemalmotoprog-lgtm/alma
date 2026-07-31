@@ -114,3 +114,29 @@ Widget "👤 Clientas" al final del inicio (o `clientas.php`):
 
 La app usa dos cosas que originalmente venían de internet: la librería de gráficas (Chart.js) y las tipografías (Google Fonts). Chart.js ya viene incluida localmente en `assets/js/vendor/` — no depende de conexión a internet ni de que tu red permita acceder a CDNs externos (por eso antes no se veían las gráficas en algunas redes). Las tipografías sí se cargan desde Google Fonts vía CSS; si tu red las bloquea, la app simplemente usa la tipografía por defecto del sistema — no rompe nada, solo cambia la letra. Si quieres que también funcionen sin internet, se pueden descargar localmente igual que se hizo con Chart.js.
 
+## 11. Reportes
+
+Widget "📊 Reportes" al final del inicio (o `reportes.php`):
+
+- Filtra por rango de fechas (con atajos: Hoy, Ayer, Esta semana, Este mes) y por marca, con casillas de selección (incluye una casilla "Todas" que marca/desmarca el resto).
+- Muestra: cobrado, vendido y "quedó a deber" en el rango; desglose por marca; desglose por día (si el rango abarca más de un día); y quién más pagó en ese rango (top 5 clientas).
+- Exporta a PDF y envía el resumen a Telegram, igual que el resto de reportes de la app.
+- Importante: "cobrado" se calcula sobre la **fecha del pago**, no la fecha del pedido — así el reporte contesta literalmente "cuánto cobré tal día", que es como Alma lo piensa.
+
+## 12. Respaldo de la base de datos
+
+Ícono ⚙ junto al saludo en el inicio (o `ajustes.php`):
+
+- Botón "Descargar respaldo de la base de datos" que genera y descarga un archivo `.sqlite` con todo lo registrado hasta ese momento.
+- Usa `VACUUM INTO` de SQLite en vez de copiar el archivo directamente — esto es importante porque la base corre en modo WAL (`PRAGMA journal_mode = WAL`), y copiar el archivo `.sqlite` a mano puede dejar fuera cambios recientes que todavía viven en el archivo `-wal`. `VACUUM INTO` genera una copia 100% consistente.
+- Para restaurar un respaldo: reemplaza el archivo en `data/catalogo.sqlite` del servidor nuevo con el que descargaste, y reinicia el servidor PHP.
+- Recomendación: descarga un respaldo antes de mover el proyecto de servidor, y de ahí en adelante hazlo cada que se te ocurra (no hay límite ni automatización — es manual a propósito, para que tengas control total).
+
+## 13. Código de producto en inventario
+
+Cada producto del inventario ahora puede llevar un campo "Código" opcional (ej. `FM12345`), visible en su tarjeta y en el nombre del PDF/Telegram del inventario. No es único ni obligatorio — es solo un campo de texto libre para que combine con la nomenclatura que ya usan las marcas.
+
+## 14. Eliminar campañas
+
+En `marca.php`, cada tarjeta de campaña tiene un botón "✕" en la esquina para eliminarla. Si la campaña tiene pedidos registrados, te avisa antes de confirmar (el borrado se lleva en cascada los encargos y pagos de esa campaña — no quedan datos sueltos). Útil para limpiar campañas creadas por error o duplicadas.
+

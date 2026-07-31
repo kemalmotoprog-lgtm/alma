@@ -48,6 +48,7 @@ foreach ($clientasRows as $c) {
     $saldo = $c['comprado'] - $c['pagado'];
     if ($saldo > 0.004) { $deudaTotal += $saldo; $clientasConDeuda++; }
 }
+$cobradoHoy = (float)$pdo->query("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE fecha = date('now')")->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -63,9 +64,12 @@ foreach ($clientasRows as $c) {
 </head>
 <body>
 
-<div class="greeting">
-    <div class="hola">Bienvenida Promotora de Belleza</div>
-    <h1>Hola, <?= htmlspecialchars(NOMBRE_DUENA) ?></h1>
+<div class="greeting" style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+        <div class="hola">Bienvenida Promotora de Belleza</div>
+        <h1>Hola, <?= htmlspecialchars(NOMBRE_DUENA) ?></h1>
+    </div>
+    <a href="ajustes.php" style="color:var(--text-faint); font-size:20px; padding:6px; margin-top:2px;">⚙</a>
 </div>
 
 <div class="widget-grid">
@@ -111,6 +115,16 @@ foreach ($clientasRows as $c) {
         <div class="brand-figure">
             <span class="lbl">Deuda total</span>
             <span class="mono"><?= money($deudaTotal) ?></span>
+        </div>
+    </a>
+
+    <a class="widget widget-global" style="--accent:#6ea8ff" href="reportes.php">
+        <div class="badge" style="--accent:#6ea8ff">📊</div>
+        <div class="brand-name">Reportes</div>
+        <div class="brand-sub">Cobranza por fecha y marca</div>
+        <div class="brand-figure">
+            <span class="lbl">Cobrado hoy</span>
+            <span class="mono"><?= money($cobradoHoy) ?></span>
         </div>
     </a>
 </div>

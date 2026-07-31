@@ -123,6 +123,11 @@ foreach ($productos as $p) $valorInventario += $p['precio_sugerido'] * max($p['s
             </div>
             <div class="producto-meta">
                 <div class="field">
+                    <span class="lbl">Código</span>
+                    <input type="text" value="<?= htmlspecialchars($p['codigo'] ?? '') ?>" placeholder="Ej. FM12345" style="width:100px; text-transform:uppercase;"
+                           onchange="actualizarProducto(<?= $p['id'] ?>, {codigo: this.value})">
+                </div>
+                <div class="field">
                     <span class="lbl">Precio</span>
                     <input type="number" step="0.01" value="<?= $p['precio_sugerido'] ?>"
                            onchange="actualizarProducto(<?= $p['id'] ?>, {precio_sugerido: this.value})">
@@ -155,6 +160,11 @@ foreach ($productos as $p) $valorInventario += $p['precio_sugerido'] * max($p['s
         <div class="form-row">
             <label>Nombre</label>
             <input type="text" id="prodNombre" placeholder="Ej. Perfume Kaiak 100ml">
+        </div>
+
+        <div class="form-row">
+            <label>Código (opcional)</label>
+            <input type="text" id="prodCodigo" placeholder="Ej. FM12345" style="text-transform:uppercase;">
         </div>
 
         <div class="form-row">

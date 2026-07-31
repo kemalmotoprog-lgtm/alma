@@ -57,13 +57,16 @@ $anioActual = (int)date('Y');
         <?php foreach ($campanas as $c):
             $s = $campStats[$c['id']];
         ?>
-            <a class="campana-card" style="--accent:<?= $marca['color'] ?>" href="campana.php?id=<?= $c['id'] ?>">
-                <div class="num" style="color:<?= $marca['color'] ?>">C<?= $c['numero'] ?></div>
-                <div class="rango"><?= $c['anio'] ?> · <?= $s['pedidos'] ?> pedido<?= $s['pedidos']==1?'':'s' ?></div>
-                <div class="mini-stat <?= $s['porCobrar'] <= 0.004 ? 'ok' : '' ?>">
-                    <?= $s['porCobrar'] <= 0.004 ? 'Al corriente' : money($s['porCobrar']) . ' pend.' ?>
-                </div>
-            </a>
+            <div class="campana-card" style="--accent:<?= $marca['color'] ?>">
+                <button class="campana-del" onclick="eliminarCampana(<?= $c['id'] ?>, <?= $s['pedidos'] ?>, this)" title="Eliminar campaña">✕</button>
+                <a href="campana.php?id=<?= $c['id'] ?>" style="display:block;">
+                    <div class="num" style="color:<?= $marca['color'] ?>">C<?= $c['numero'] ?></div>
+                    <div class="rango"><?= $c['anio'] ?> · <?= $s['pedidos'] ?> pedido<?= $s['pedidos']==1?'':'s' ?></div>
+                    <div class="mini-stat <?= $s['porCobrar'] <= 0.004 ? 'ok' : '' ?>">
+                        <?= $s['porCobrar'] <= 0.004 ? 'Al corriente' : money($s['porCobrar']) . ' pend.' ?>
+                    </div>
+                </a>
+            </div>
         <?php endforeach; ?>
         </div>
     <?php endif; ?>
@@ -128,6 +131,22 @@ async function crearCampana() {
         location.reload();
     } else {
         toast(data.error || 'No se pudo crear');
+    }
+}
+
+async function eliminarCampana(id, pedidos, btn) {
+    const aviso = pedidos > 0
+        ? `Esta campaña tiene ${pedidos} pedido${pedidos === 1 ? '' : 's'} registrado${pedidos === 1 ? '' : 's'}. Si la eliminas, se borran también sus pedidos y pagos. ¿Continuar?`
+        : '¿Eliminar esta campaña?';
+    if (!confirm(aviso)) return;
+
+    const res = await fetch('api/campanas.php?id=' + id, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+        btn.closest('.campana-card').remove();
+        toast('Campaña eliminada');
+    } else {
+        toast(data.error || 'No se pudo eliminar');
     }
 }
 </script>
