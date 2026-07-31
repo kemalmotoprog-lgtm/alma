@@ -1,0 +1,14 @@
+# Archivos de configuración con credenciales/contraseñas
+db.php
+config.php
+
+# Dependencias de Composer (se instalan con 'composer install')
+vendor/
+
+# Archivos de datos o bases de datos locales
+data/*
+!data/.gitkeep
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
