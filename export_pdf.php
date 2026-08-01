@@ -25,8 +25,10 @@ function ascii($s) {
 class ReportePDF extends FPDF {
     public $tituloReporte = '';
     function Header() {
-        $this->SetFont('Arial', 'B', 14);
-        $this->Cell(0, 8, ascii($this->tituloReporte), 0, 1);
+        $this->SetFont('Arial', 'B', 16);
+        $this->Cell(0, 8, ascii(NOMBRE_NEGOCIO), 0, 1);
+        $this->SetFont('Arial', 'B', 12);
+        $this->Cell(0, 7, ascii($this->tituloReporte), 0, 1);
         $this->SetFont('Arial', '', 9);
         $this->SetTextColor(120, 120, 120);
         $this->Cell(0, 6, ascii('Generado el ' . date('d/m/Y H:i')), 0, 1);

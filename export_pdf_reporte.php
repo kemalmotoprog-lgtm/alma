@@ -19,8 +19,10 @@ function ascii($s) { return iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $s ?? ''); }
 class ReportePDF extends FPDF {
     public $rango = '';
     function Header() {
-        $this->SetFont('Arial', 'B', 14);
-        $this->Cell(0, 8, ascii('Reporte de cobranza'), 0, 1);
+        $this->SetFont('Arial', 'B', 16);
+        $this->Cell(0, 8, ascii(NOMBRE_NEGOCIO), 0, 1);
+        $this->SetFont('Arial', 'B', 12);
+        $this->Cell(0, 7, ascii('Reporte de cobranza'), 0, 1);
         $this->SetFont('Arial', '', 9);
         $this->SetTextColor(120, 120, 120);
         $this->Cell(0, 6, ascii($this->rango . ' · Generado el ' . date('d/m/Y H:i')), 0, 1);
@@ -46,6 +48,13 @@ class ReportePDF extends FPDF {
         $this->Ln();
         $this->SetTextColor(0, 0, 0);
         $this->SetFont('Arial', '', 8.5);
+    }
+    /** Salta de página manualmente y repite el encabezado de tabla, si la siguiente fila no cabe */
+    function AsegurarEspacio($alturaFila, $cols) {
+        if ($this->GetY() + $alturaFila > $this->PageBreakTrigger) {
+            $this->AddPage($this->CurOrientation);
+            $this->TablaHeader($cols);
+        }
     }
 }
 
@@ -86,15 +95,24 @@ if ($fechaInicio !== $fechaFin && !empty($reporte['porDia'])) {
     }
 }
 
-// Top clientas
-if (!empty($reporte['topClientas'])) {
-    $pdf->Seccion('Quien mas pago en este rango');
-    $pdf->TablaHeader([['Clienta', 90], ['Pagado', 90]]);
-    foreach ($reporte['topClientas'] as $tc) {
-        $pdf->Cell(90, 6.5, ascii(safe_mb_substr($tc['nombre'], 0, 45)), 1);
-        $pdf->Cell(90, 6.5, number_format($tc['total'], 2), 1, 0, 'R');
+// Todos los cobros individuales (puede abarcar varias páginas)
+if (!empty($reporte['pagos'])) {
+    $colsCobros = [['Fecha', 25], ['Clienta', 65], ['Marca', 45], ['Monto', 45]];
+    $pdf->Seccion('Todos los cobros (' . count($reporte['pagos']) . ')');
+    $pdf->TablaHeader($colsCobros);
+    foreach ($reporte['pagos'] as $pg) {
+        $pdf->AsegurarEspacio(6.5, $colsCobros);
+        $pdf->Cell(25, 6.5, date('d/m/y', strtotime($pg['fecha'])), 1);
+        $pdf->Cell(65, 6.5, ascii(safe_mb_substr($pg['clienta_nombre'], 0, 34)), 1);
+        $pdf->Cell(45, 6.5, ascii($pg['marca_nombre']), 1, 0, 'C');
+        $pdf->Cell(45, 6.5, number_format($pg['monto'], 2), 1, 0, 'R');
         $pdf->Ln();
     }
+    $pdf->AsegurarEspacio(7, $colsCobros);
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->SetFillColor(235, 235, 235);
+    $pdf->Cell(135, 7, 'TOTAL COBRADO', 1, 0, 'R', true);
+    $pdf->Cell(45, 7, number_format($reporte['totalCobrado'], 2), 1, 1, 'R', true);
 }
 
 $pdf->Output('I', 'reporte_' . $fechaInicio . '_a_' . $fechaFin . '.pdf');

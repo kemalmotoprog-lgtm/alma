@@ -136,15 +136,23 @@ $queryExport = http_build_query(['fecha_inicio' => $fechaInicio, 'fecha_fin' => 
     </div>
     <?php endif; ?>
 
-    <?php if (!empty($reporte['topClientas'])): ?>
-    <div class="section-title"><span>Quién más pagó en este rango</span></div>
+    <?php if (!empty($reporte['pagos'])): ?>
+    <div class="section-title"><span>Todos los cobros (<?= count($reporte['pagos']) ?>)</span></div>
     <div class="chart-card" style="margin:0 0 16px;">
-        <?php foreach ($reporte['topClientas'] as $tc): ?>
+        <?php foreach ($reporte['pagos'] as $pg): ?>
             <div class="desglose-row">
-                <div class="izq"><?= htmlspecialchars($tc['nombre']) ?></div>
-                <div class="der"><?= money($tc['total']) ?></div>
+                <div class="izq">
+                    <span class="dot" style="--d-color:<?= $pg['marca_color'] ?>"></span>
+                    <?= htmlspecialchars($pg['clienta_nombre']) ?>
+                    <span style="color:var(--text-faint); font-size:11.5px;">· <?= date('d/m', strtotime($pg['fecha'])) ?></span>
+                </div>
+                <div class="der"><?= money($pg['monto']) ?></div>
             </div>
         <?php endforeach; ?>
+        <div class="desglose-row" style="border-top:2px solid var(--border); margin-top:4px; padding-top:12px;">
+            <div class="izq" style="font-weight:600;">Total</div>
+            <div class="der" style="font-weight:600; color:var(--green);"><?= money($reporte['totalCobrado']) ?></div>
+        </div>
     </div>
     <?php endif; ?>
 </div>

@@ -72,7 +72,13 @@ $cobradoHoy = (float)$pdo->query("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE
     <a href="ajustes.php" style="color:var(--text-faint); font-size:20px; padding:6px; margin-top:2px;">⚙</a>
 </div>
 
+<?php
+// Para volver a mostrar el widget "Global" en el inicio, cambia esto a true.
+$mostrarWidgetGlobal = false;
+?>
+
 <div class="widget-grid">
+    <?php if ($mostrarWidgetGlobal): ?>
     <a class="widget widget-global" style="--accent: var(--c-global)" href="global.php">
         <div class="badge" style="--accent: var(--c-global)">∑</div>
         <div class="brand-name">Global</div>
@@ -82,6 +88,7 @@ $cobradoHoy = (float)$pdo->query("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE
             <span class="mono"><?= money($globalTotal['ganado']) ?></span>
         </div>
     </a>
+    <?php endif; ?>
 
     <?php foreach ($marcas as $m):
         $s = $stats[$m['id']];

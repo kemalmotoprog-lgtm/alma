@@ -21,7 +21,8 @@ $marcasSel = isset($_GET['marcas']) ? array_map('intval', (array)$_GET['marcas']
 $reporte = generarReporte($pdo, $fechaInicio, $fechaFin, $marcasSel);
 $rangoTxt = $fechaInicio === $fechaFin ? $fechaInicio : "{$fechaInicio} al {$fechaFin}";
 
-$texto = "📊 *Reporte de cobranza · {$rangoTxt}*\n\n";
+$texto = "📊 *" . NOMBRE_NEGOCIO . "*\n";
+$texto .= "*Reporte de cobranza · {$rangoTxt}*\n\n";
 $texto .= "✅ Cobrado: " . money($reporte['totalCobrado']) . "\n";
 $texto .= "💰 Vendido: " . money($reporte['totalVendido']) . "\n";
 $texto .= "⏳ Quedó a deber: " . money($reporte['totalPendienteGenerado']) . "\n";
@@ -33,15 +34,24 @@ if (!empty($reporte['porMarca'])) {
     }
 }
 
-if (!empty($reporte['topClientas'])) {
-    $texto .= "\n*Quién más pagó:*\n";
-    foreach ($reporte['topClientas'] as $tc) {
-        $texto .= "• {$tc['nombre']}: " . money($tc['total']) . "\n";
-    }
+if (empty($reporte['pagos']) && empty($reporte['pedidos'])) {
+    $texto = "📊 *" . NOMBRE_NEGOCIO . "*\n*Reporte de cobranza · {$rangoTxt}*\n\nSin movimientos en este rango.";
 }
 
-if (empty($reporte['pagos']) && empty($reporte['pedidos'])) {
-    $texto = "📊 *Reporte de cobranza · {$rangoTxt}*\n\nSin movimientos en este rango.";
+// Todos los cobros individuales, en mensajes aparte (Telegram limita ~4096 caracteres por mensaje)
+$mensajesCobros = [];
+if (!empty($reporte['pagos'])) {
+    $bloque = "*Todos los cobros (" . count($reporte['pagos']) . "):*\n";
+    foreach ($reporte['pagos'] as $pg) {
+        $linea = "• " . date('d/m', strtotime($pg['fecha'])) . " — {$pg['clienta_nombre']} ({$pg['marca_nombre']}): " . money($pg['monto']) . "\n";
+        if (strlen($bloque) + strlen($linea) > 3500) {
+            $mensajesCobros[] = $bloque;
+            $bloque = '';
+        }
+        $bloque .= $linea;
+    }
+    $bloque .= "\n*Total cobrado: " . money($reporte['totalCobrado']) . "*";
+    $mensajesCobros[] = $bloque;
 }
 
 function telegramCall(string $method, array $params) {
@@ -66,6 +76,17 @@ $res = telegramCall('sendMessage', [
 
 if (empty($res['ok'])) {
     jsonOut(['ok' => false, 'error' => $res['description'] ?? 'Telegram rechazó el mensaje'], 500);
+}
+
+foreach ($mensajesCobros as $bloque) {
+    $r = telegramCall('sendMessage', [
+        'chat_id' => TELEGRAM_CHAT_ID,
+        'text' => $bloque,
+        'parse_mode' => 'Markdown'
+    ]);
+    if (empty($r['ok'])) {
+        jsonOut(['ok' => false, 'error' => 'Se envió el resumen, pero falló el detalle de cobros: ' . ($r['description'] ?? '')], 500);
+    }
 }
 
 jsonOut(['ok' => true]);

@@ -151,14 +151,5 @@ function generarReporte(PDO $pdo, string $inicio, string $fin, array $marcaIds):
     }
     ksort($porDia);
 
-    // Top clientas que más pagaron en el rango
-    $porClienta = [];
-    foreach ($pagos as $p) {
-        $porClienta[$p['clienta_id']]['nombre'] = $p['clienta_nombre'];
-        $porClienta[$p['clienta_id']]['total'] = ($porClienta[$p['clienta_id']]['total'] ?? 0) + $p['monto'];
-    }
-    usort($porClienta, fn($a, $b) => $b['total'] <=> $a['total']);
-    $topClientas = array_slice($porClienta, 0, 5);
-
-    return compact('totalCobrado', 'totalVendido', 'totalPendienteGenerado', 'porMarca', 'porDia', 'topClientas', 'pagos', 'pedidos');
+    return compact('totalCobrado', 'totalVendido', 'totalPendienteGenerado', 'porMarca', 'porDia', 'pagos', 'pedidos');
 }
