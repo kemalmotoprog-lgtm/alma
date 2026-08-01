@@ -1,5 +1,12 @@
 <?php
 
+// Respaldo por si config.php en el servidor todavía no tiene esta constante
+// (pasa si no se reemplazó ese archivo al actualizar, algo que recomendamos
+// para no perder credenciales ya configuradas de Telegram).
+if (!defined('NOMBRE_NEGOCIO')) {
+    define('NOMBRE_NEGOCIO', 'ALMA DELIA COSMETICS');
+}
+
 /**
  * Envoltorios seguros para funciones mbstring: si la extensión no está
  * instalada (pasa en algunos PHP de Kali/Debian por defecto), usamos un
