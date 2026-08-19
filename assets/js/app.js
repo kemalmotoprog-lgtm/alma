@@ -1,15 +1,32 @@
 // ---------- Utilidades ----------
-function toast(msg) {
+function toast(msg, type = 'success') {
     const t = document.getElementById('toast');
     if (!t) return;
-    t.textContent = msg;
-    t.classList.add('show');
+    const iconos = { success: '✓', error: '✕', info: 'ℹ' };
+
     clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.remove('show'), 1800);
+    t.classList.remove('show');
+    void t.offsetWidth; // fuerza a reiniciar la animación si se llama varias veces seguidas
+    t.className = 'toast-' + type;
+    t.innerHTML = `<span class="toast-icon">${iconos[type] || '✓'}</span><span>${msg}</span>`;
+    t.classList.add('show');
+
+    if (navigator.vibrate) navigator.vibrate(type === 'error' ? [40, 60, 40] : 20);
+
+    t._timer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
 function money(n) {
     return '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Fecha de HOY según el reloj local del celular/navegador (toISOString() usaría UTC y desfasa el día)
+function fechaLocalHoy() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dia}`;
 }
 
 async function api(url, method = 'GET', body = null) {
@@ -18,8 +35,12 @@ async function api(url, method = 'GET', body = null) {
         opts.headers['Content-Type'] = 'application/json';
         opts.body = JSON.stringify(body);
     }
-    const res = await fetch(url, opts);
-    return res.json();
+    try {
+        const res = await fetch(url, opts);
+        return await res.json();
+    } catch (e) {
+        return { ok: false, error: 'Sin conexión. Revisa tu internet e intenta de nuevo.' };
+    }
 }
 
 // ---------- Encargos ----------
@@ -49,7 +70,7 @@ async function actualizarEncargo(id, payload) {
         const card = document.querySelector(`.encargo-card[data-encargo-id="${id}"]`);
         if (card) refrescarTotalesEncargo(card, data.encargo);
     } else {
-        toast(data.error || 'Error al guardar');
+        toast(data.error || 'Error al guardar', 'error');
     }
 }
 
@@ -71,15 +92,15 @@ async function eliminarEncargo(id, btn) {
         if (block && !block.querySelector('.encargo-card')) block.remove();
         toast('Encargo eliminado');
     } else {
-        toast('No se pudo eliminar');
+        toast('No se pudo eliminar', 'error');
     }
 }
 
 // ---------- Pagos ----------
 async function agregarPago(encargoId) {
-    const hoy = new Date().toISOString().slice(0, 10);
+    const hoy = fechaLocalHoy();
     const data = await api('api/pagos.php', 'POST', { encargo_id: encargoId, monto: 0, fecha: hoy });
-    if (!data.ok) { toast('No se pudo agregar el pago'); return; }
+    if (!data.ok) { toast('No se pudo agregar el pago', 'error'); return; }
 
     const lista = document.getElementById('pagos-' + encargoId);
     const row = document.createElement('div');
@@ -105,7 +126,7 @@ async function actualizarPago(id, input) {
         const card = input.closest('.encargo-card');
         if (card) refrescarTotalesEncargo(card, data.encargo);
     } else {
-        toast('Error al guardar el pago');
+        toast('Error al guardar el pago', 'error');
     }
 }
 
@@ -127,7 +148,7 @@ async function eliminarPago(id, btn) {
         if (card && data.encargo) refrescarTotalesEncargo(card, data.encargo);
         toast('Pago eliminado');
     } else {
-        toast('No se pudo eliminar el pago');
+        toast('No se pudo eliminar el pago', 'error');
     }
 }
 
@@ -215,11 +236,11 @@ async function crearEncargo() {
     if (!clientaId && clientaSeleccionada && clientaSeleccionada.nueva) {
         const alias = document.getElementById('clientaAlias').value.trim();
         const r = await api('api/clientas.php', 'POST', { nombre: clientaSeleccionada.nombre, alias });
-        if (!r.ok) { toast('No se pudo crear la clienta'); return; }
+        if (!r.ok) { toast('No se pudo crear la clienta', 'error'); return; }
         clientaId = r.id;
     }
 
-    if (!clientaId) { toast('Selecciona o crea una clienta'); return; }
+    if (!clientaId) { toast('Selecciona o crea una clienta', 'error'); return; }
 
     const productoSel = document.getElementById('productoSel');
     const productoId = productoSel && productoSel.value ? productoSel.value : null;
@@ -234,19 +255,19 @@ async function crearEncargo() {
 
     if (r.ok) {
         toast('Encargo agregado');
-        location.reload();
+        setTimeout(() => location.reload(), 700);
     } else {
-        toast(r.error || 'No se pudo guardar');
+        toast(r.error || 'No se pudo guardar', 'error');
     }
 }
 
 // ---------- Exportar a Telegram ----------
 async function enviarTelegram() {
-    toast('Enviando a Telegram...');
+    toast('Enviando a Telegram...', 'info');
     const r = await api('export_telegram.php?campana_id=' + CAMPANA_ID, 'POST');
     if (r.ok) {
-        toast('Reporte enviado a Telegram ✓');
+        toast('Reporte enviado a Telegram');
     } else {
-        toast(r.error || 'No se pudo enviar');
+        toast(r.error || 'No se pudo enviar', 'error');
     }
 }

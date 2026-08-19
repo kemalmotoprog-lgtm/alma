@@ -48,7 +48,9 @@ foreach ($clientasRows as $c) {
     $saldo = $c['comprado'] - $c['pagado'];
     if ($saldo > 0.004) { $deudaTotal += $saldo; $clientasConDeuda++; }
 }
-$cobradoHoy = (float)$pdo->query("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE fecha = date('now')")->fetchColumn();
+$stmtHoy = $pdo->prepare("SELECT COALESCE(SUM(monto),0) FROM pagos WHERE fecha = ?");
+$stmtHoy->execute([date('Y-m-d')]);
+$cobradoHoy = (float)$stmtHoy->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="es">

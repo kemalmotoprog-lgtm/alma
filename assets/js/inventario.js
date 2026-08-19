@@ -4,7 +4,7 @@ async function actualizarProducto(id, payload) {
     if (data.ok) {
         toast('Guardado');
     } else {
-        toast(data.error || 'Error al guardar');
+        toast(data.error || 'Error al guardar', 'error');
     }
 }
 
@@ -15,7 +15,7 @@ async function eliminarProducto(id, btn) {
         btn.closest('.producto-card').remove();
         toast('Producto eliminado');
     } else {
-        toast('No se pudo eliminar');
+        toast('No se pudo eliminar', 'error');
     }
 }
 
@@ -56,8 +56,8 @@ async function crearProducto() {
     const precio = document.getElementById('prodPrecio').value || 0;
     const stock = document.getElementById('prodStock').value || 0;
 
-    if (!nombre) { toast('Falta el nombre'); return; }
-    if (!marcaId) { toast('Selecciona una marca'); return; }
+    if (!nombre) { toast('Falta el nombre', 'error'); return; }
+    if (!marcaId) { toast('Selecciona una marca', 'error'); return; }
 
     const r = await api('api/productos.php', 'POST', {
         nombre, codigo, marca_id: marcaId, campana_id: campanaId || null,
@@ -66,21 +66,21 @@ async function crearProducto() {
 
     if (r.ok) {
         toast('Producto agregado');
-        location.reload();
+        setTimeout(() => location.reload(), 700);
     } else {
-        toast(r.error || 'No se pudo guardar');
+        toast(r.error || 'No se pudo guardar', 'error');
     }
 }
 
 // ---------- Exportar a Telegram ----------
 async function enviarTelegramInventario() {
-    toast('Enviando a Telegram...');
+    toast('Enviando a Telegram...', 'info');
     const params = new URLSearchParams(window.location.search);
     const marcaId = params.get('marca_id') || '';
     const r = await api('export_telegram_inventario.php' + (marcaId ? '?marca_id=' + marcaId : ''), 'POST');
     if (r.ok) {
-        toast('Inventario enviado a Telegram ✓');
+        toast('Inventario enviado a Telegram');
     } else {
-        toast(r.error || 'No se pudo enviar');
+        toast(r.error || 'No se pudo enviar', 'error');
     }
 }

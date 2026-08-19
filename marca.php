@@ -104,22 +104,16 @@ $anioActual = (int)date('Y');
 </div>
 
 <div id="toast"></div>
+<script src="assets/js/app.js"></script>
 <script>
 const MARCA_ID = <?= (int)$marca['id'] ?>;
-
-function toast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 1800);
-}
 
 async function crearCampana() {
     const numero = document.getElementById('numCampana').value;
     const anio = document.getElementById('anioCampana').value;
     const fecha_inicio = document.getElementById('inicioCampana').value;
     const fecha_fin = document.getElementById('finCampana').value;
-    if (!numero || !anio) { toast('Falta el número o el año'); return; }
+    if (!numero || !anio) { toast('Falta el número o el año', 'error'); return; }
 
     const res = await fetch('api/campanas.php', {
         method: 'POST',
@@ -128,9 +122,10 @@ async function crearCampana() {
     });
     const data = await res.json();
     if (data.ok) {
-        location.reload();
+        toast('Campaña creada');
+        setTimeout(() => location.reload(), 700);
     } else {
-        toast(data.error || 'No se pudo crear');
+        toast(data.error || 'No se pudo crear', 'error');
     }
 }
 
@@ -146,7 +141,7 @@ async function eliminarCampana(id, pedidos, btn) {
         btn.closest('.campana-card').remove();
         toast('Campaña eliminada');
     } else {
-        toast(data.error || 'No se pudo eliminar');
+        toast(data.error || 'No se pudo eliminar', 'error');
     }
 }
 </script>

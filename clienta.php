@@ -155,12 +155,12 @@ $saldoTotal = round($totalComprado - $totalPagado, 2);
 <script src="assets/js/app.js"></script>
 <script>
 async function enviarTelegramClienta() {
-    toast('Enviando a Telegram...');
+    toast('Enviando a Telegram...', 'info');
     const r = await api('export_telegram_clienta.php?id=<?= $clientaId ?>', 'POST');
     if (r.ok) {
-        toast('Estado de cuenta enviado ✓');
+        toast('Estado de cuenta enviado');
     } else {
-        toast(r.error || 'No se pudo enviar');
+        toast(r.error || 'No se pudo enviar', 'error');
     }
 }
 </script>

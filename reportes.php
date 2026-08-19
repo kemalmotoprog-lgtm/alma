@@ -177,7 +177,12 @@ function setFechas(ini, fin) {
     document.querySelector('input[name=fecha_inicio]').value = ini;
     document.querySelector('input[name=fecha_fin]').value = fin;
 }
-function fmt(d) { return d.toISOString().slice(0,10); }
+function fmt(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dia}`;
+}
 
 function fijarRango(diasIni, diasFin) {
     const hoy = new Date();
@@ -198,13 +203,13 @@ function fijarRangoMes() {
 }
 
 async function enviarTelegramReporte() {
-    toast('Enviando a Telegram...');
+    toast('Enviando a Telegram...', 'info');
     const params = new URLSearchParams(window.location.search);
     const r = await api('export_telegram_reporte.php?' + params.toString(), 'POST');
     if (r.ok) {
-        toast('Reporte enviado a Telegram ✓');
+        toast('Reporte enviado a Telegram');
     } else {
-        toast(r.error || 'No se pudo enviar');
+        toast(r.error || 'No se pudo enviar', 'error');
     }
 }
 </script>
